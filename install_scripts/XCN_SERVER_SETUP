@@ -1,0 +1,49 @@
+On each machine, run ssh-keygen and generate an rsa key:
+
+Create authorized_keys file with all xcn machines and host machines
+
+Copy the authorized_keys file to every xcn machine’s $HOME/.ssh/ folder
+
+Run visudo and append the following line:
+
+	wdron   ALL=(ALL) NOPASSWD: ALL
+
+Edit /etc/ssh/sshd_config and set:
+
+	PasswordAuthentication no
+
+Install subversion:
+
+	$ sudo apt-get -y update
+	$ sudo apt-get -y install subversion
+
+Checkout experimentation svn tree:
+
+	$ svn co https://www.ns-cta.org/svn/netsci/experimentation/src/trunk experimentation
+
+Install xcn framework:
+
+	$ cd experimentation/Emulation_Experiments/install_scripts/
+	$ ./setup_env_apt.sh
+	$ ./install-protobuf.sh
+	$ ./install-emane.sh
+	$ ./install-docker.sh
+	$ ./install-zeromq.sh
+	$ ./install-olsrd.sh
+
+Build Shim:
+	$ cd experimentation/Tools/core-shim
+	$ ant && ant -f package.xml
+	$ cd bindings/cpp/
+	$ ./install-deps.sh
+	$ make
+
+Build MGC:
+
+	$ cd $HOME/experimentation/Tools/core-shim/bindings/cpp
+	$ ./install-deps.sh
+	$ make
+	$ cd $HOME/experimentation/Tools/multi-genre-caching
+	$ make
+
+

@@ -1,0 +1,53 @@
+#!/usr/bin/env python
+
+from xcn_env import XCN_ENVIRONMENT
+from xcn_emane import XCN_EMANE
+from xcn_shim import XCN_SHIM
+from xcn_olsrd import XCN_OLSRD
+
+# Initialize the global environment
+xcn_env = XCN_ENVIRONMENT()
+
+# Example of how to add other host machines to this experiment and distribute
+# processing.
+#xcn_env.set_machines(["localhost", "xcn2.bbn.com", "xcn6.bbn.com"])
+
+# Initialize EMANE
+emane = XCN_EMANE(xcn_env, "rfpipe", "test.eel", {
+  "datarate": "1M",
+})
+
+# Example of using lat/lon in the eel file
+#emane = XCN_EMANE(xcn_env, "rfpipe", "latlon.eel", {
+#  "datarate": "100000",
+#  "propagationmodel": "2ray",
+#})
+
+# Example to add an additional subnet
+#emane.add_subnet("rfpipe", {"datarate":"1M"}, [1,2])
+
+xcn_env.add_module(emane)
+xcn_env.add_cmd(xcn_env.INIT_NODE, emane.install_static_routes)
+#xcn_env.add_module(XCN_OLSRD(emane))
+
+# Several examples to show how to inject commands into the system. Emane
+# creates the network of nodes in this setup, so all commands go through the
+# EMANE class and not the xcn_env class.
+
+# The XCN_EMANE Class has a wrapper command that will parse {{IP}}
+# emane.add_node_cmd(1, "ping -c 10 {{IP}}.3 > {{LOGDIR}}/ping.log &")
+
+# Send a command to all nodes
+# emane.add_cmd(xcn_env.START_NODE, "ping -c 10 10.{{RUNID}}.0.3 > {{LOGDIR}}/ping.log")
+
+# Send a command with the format (init_sleep_time_ms, nodeid, command):
+# emane.add_cmd(xcn_env.START_NODE, (10000, 1, "ping -c 10 10.{{RUNID}}.0.3 > {{LOGDIR}}/ping.log"))
+
+# Retrieve a node and send a command directly to it:
+# emane.get_node(1).add_cmd(xcn_env.START_NODE, "sleep 10 && ping -c 10 10.{{RUNID}}.0.3 > {{LOGDIR}}/ping.log")
+
+# SHIM (uses the network created by emane)
+xcn_env.add_module(XCN_SHIM(emane))
+
+# Run the experiment
+xcn_env.start()

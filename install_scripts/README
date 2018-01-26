@@ -1,0 +1,20 @@
+These scripts assume the machine being used is running the Ubuntu operating
+system. The current version in use is 12.04.
+
+
+*********
+* SETUP *
+*********
+
+Please run setup_env_apt.sh before other installation scripts. This script will
+install packages necessary for the emulation environments, graphing scripts,
+and building the DTN source.
+
+
+*******************
+* Install Modules *
+*******************
+
+Each module has a separate install-*.sh script. Some modules do depend on
+others to run using the scripts in the xcn directory. For example, both NS3 and
+EMANE require CORE.
