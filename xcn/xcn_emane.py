@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2011-2016 Raytheon BBN Technologies Corp.  All rights reserved.
+# Copyright (c) 2011-2018 Raytheon BBN Technologies Corp.  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -11,7 +11,7 @@
 #    this list of conditions and the following disclaimer in the documentation
 #    and/or other materials provided with the distribution.
 # 3. Neither the name of Raytheon BBN Technologies nor the names of its
-#    contributors may be used to endorse or oromote products derived from this
+#    contributors may be used to endorse or promote products derived from this
 #    software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND ANY
@@ -25,7 +25,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# $Id$
+# @author Will Dron <will.dron@raytheon.com>
 
 import sys
 import os
