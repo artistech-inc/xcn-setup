@@ -27,61 +27,61 @@
 #
 # @author Will Dron <will.dron@raytheon.com>
 
-import sys
-import os
-import re
-import time
+import math
 
-ipToNode = {}
+# 0.0  nem:1 pathloss nem:2,50 nem:3,44 nem:4,45 
+# 0.0  nem:2 pathloss nem:1,50 nem:3,44 nem:4,45 
+# 0.0  nem:3 pathloss nem:1,44 nem:2,44 nem:4,50 
+# 0.0  nem:4 pathloss nem:1,45 nem:2,45 nem:3,50
 
-entry_filter = re.compile("^(\d+.\d+.\d+.[1-9]\d*)\s+(\d+.\d+.\d+.\d+).*")
-if len(sys.argv) > 1:
-  # 0	n0	172.16.1.1/24	10.0.0.1/24
-  f = open(sys.argv[1], 'r')
-  for line in f.readlines():
-    s = line.split()
-    nodeName = s[1]
-    for ip in s[2:]:
-      if ip != "0.0.0.0":
-        ipToNode[ip.split('/')[0]] = nodeName
 
-else:
-  filter = False
+def gen_mesh_topo(num_nodes):
+  for i in range(num_nodes):
+    print "0.0  nem:%d pathloss" % (i + 1),
+    for j in range(num_nodes):
+      if i == j:
+        continue
+      print "nem:%d,20" % (j + 1),
+    print
 
-#route -n |grep ^1
-#10.0.3.0        0.0.0.0         255.255.255.0   U     0      0        0 lxcbr0
-#192.1.120.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
-#192.168.122.0   0.0.0.0         255.255.255.0   U     0      0        0 virbr0
 
-nexthops = {}
-curtime = 0.0
+def gen_linear_topo(num_nodes):
+  for i in range(num_nodes):
+    print "0.0  nem:%d pathloss" % (i + 1),
+    for j in range(num_nodes):
+      if i == j:
+        continue
+      if i == (j - 1) or i == (j + 1):
+        print "nem:%d,20" % (j + 1),
+      else:
+        print "nem:%d,999" % (j + 1),
+    print
 
-while True:
-  doflush = False
 
-  for line in os.popen("route -n").readlines():
-    match = entry_filter.match(line)
-    if match:
-      dest = match.group(1)
-      nhop = match.group(2)
+def gen_grid_topo(num_nodes):
+  n = int(math.sqrt(num_nodes))
+  for i in range(num_nodes):
+    print "0.0  nem:%d pathloss" % (i + 1),
+    for j in range(num_nodes):
+      if i == j:
+        continue
+      if (i == (j - 1) and not (j % n) == 0) or (i == (j + 1) and not (
+          (j + 1) % n) == 0):
+        print "nem:%d,20" % (j + 1),
+      elif i == (j - n) or i == (j + n):
+        print "nem:%d,20" % (j + 1),
+      else:
+        print "nem:%d,999" % (j + 1),
+    print
 
-      if ipToNode.has_key(dest):
-        dest = ipToNode[dest]
 
-      if nhop == "0.0.0.0" and not nexthops.has_key(dest):
-        print "%.2f add nexthop %s" % (curtime, dest)
-        doflush = True
-        nexthops[dest] = nhop
-      elif nhop != "0.0.0.0" and nexthops.has_key(dest):
-        print "%.2f remove nexthop %s" % (curtime, dest)
-        doflush = True
-        nexthops.pop(dest)
+def main():
+  gen_mesh_topo(4)
+  print
+  gen_linear_topo(4)
+  print
+  gen_grid_topo(12)
 
-  try:
-    if doflush:
-      sys.stdout.flush()
-    time.sleep(1)
-  except:
-    sys.exit(0)
 
-  curtime += 1.0
+if __name__ == "__main__":
+  main()

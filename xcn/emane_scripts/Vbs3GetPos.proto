@@ -1,0 +1,15 @@
+syntax = "proto2";
+package VBS3;
+
+message Position {
+    required float x = 1;
+    required float y = 2;
+    required float z = 3;
+    optional float deltaT = 4;
+    optional string id = 5;
+    required float dir = 6;
+    required float worldCenterX = 7;
+    required float worldCenterY = 8;
+    optional string lat = 9;
+    optional string lon = 10;
+}

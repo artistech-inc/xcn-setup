@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env bash
 #
 # Copyright (c) 2011-2018 Raytheon BBN Technologies Corp.  All rights reserved.
 #
@@ -27,61 +27,33 @@
 #
 # @author Will Dron <will.dron@raytheon.com>
 
-import sys
-import os
-import re
-import time
+dir=`ls -d /tmp/xcn.[0-9]*`
+numdirs=`echo $dir | wc -w `
+if [ $numdirs -ne 1 ]; then
+  echo "ERROR: Found $numdirs running XCN instances. This script only works with 1"
+  exit 1
+fi
 
-ipToNode = {}
+runid=`echo $dir |awk -F '.' '{print $2}'`
+numnodes=`ls -d ${dir}/n[0-9]*-[0-9]* |wc -w`
+info=`grep eventservicegroup ${dir}/emane_configs/eventservice.xml |grep -o '[0-9]*.[0-9]*.[0-9]*.[0-9]*:[0-9]*'`
+mcaddr=`echo $info |awk -F ':' '{print $1}'`
 
-entry_filter = re.compile("^(\d+.\d+.\d+.[1-9]\d*)\s+(\d+.\d+.\d+.\d+).*")
-if len(sys.argv) > 1:
-  # 0	n0	172.16.1.1/24	10.0.0.1/24
-  f = open(sys.argv[1], 'r')
-  for line in f.readlines():
-    s = line.split()
-    nodeName = s[1]
-    for ip in s[2:]:
-      if ip != "0.0.0.0":
-        ipToNode[ip.split('/')[0]] = nodeName
+eventport=`echo $info |awk -F ':' '{print $2}'`
+controlport=`grep controlportendpoint $dir/emane_configs/platform1.xml | grep -o ":[0-9]*" |sed -e 's/://'`
 
-else:
-  filter = False
+if [ $# -eq 3 ]; then
+  #emaneevent-location -i lxcbr.${runid} -g ${mcaddr} -p ${eventport} $1 latitude=$2 longitude=$3 altitude=0.0
+  emaneevent-location -i xcn.${runid} -g ${mcaddr} -p ${eventport} $1 latitude=$2 longitude=$3 altitude=0.0
 
-#route -n |grep ^1
-#10.0.3.0        0.0.0.0         255.255.255.0   U     0      0        0 lxcbr0
-#192.1.120.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
-#192.168.122.0   0.0.0.0         255.255.255.0   U     0      0        0 virbr0
+else
+  #localnodes=`ps -ef |grep -o 'lxc-execute -f n[0-9][0-9]*-[0-9][0-9]*' |awk '{print $NF}'`
+  localnodes=`docker container ls |grep n[0-9][0-9]*-[0-9][0-9]*|awk '{print $NF}'`
+  for node in $localnodes; do
+    #ipaddr=`grep ipv4 /tmp/xcn.${runid}/${node}/var/lxc.conf |awk -F '=' '{print $2}'`
+    ipaddr=`docker container inspect ${node} |grep IPv4Address |awk -F '"' '{print $4}'`
+    echo emanesh -p ${controlport} ${ipaddr} get table nems phy LocationEventInfoTable
+    emanesh -p ${controlport} ${ipaddr} get table nems phy LocationEventInfoTable
+  done
 
-nexthops = {}
-curtime = 0.0
-
-while True:
-  doflush = False
-
-  for line in os.popen("route -n").readlines():
-    match = entry_filter.match(line)
-    if match:
-      dest = match.group(1)
-      nhop = match.group(2)
-
-      if ipToNode.has_key(dest):
-        dest = ipToNode[dest]
-
-      if nhop == "0.0.0.0" and not nexthops.has_key(dest):
-        print "%.2f add nexthop %s" % (curtime, dest)
-        doflush = True
-        nexthops[dest] = nhop
-      elif nhop != "0.0.0.0" and nexthops.has_key(dest):
-        print "%.2f remove nexthop %s" % (curtime, dest)
-        doflush = True
-        nexthops.pop(dest)
-
-  try:
-    if doflush:
-      sys.stdout.flush()
-    time.sleep(1)
-  except:
-    sys.exit(0)
-
-  curtime += 1.0
+fi

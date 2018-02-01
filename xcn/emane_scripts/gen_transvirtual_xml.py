@@ -27,61 +27,23 @@
 #
 # @author Will Dron <will.dron@raytheon.com>
 
-import sys
-import os
-import re
-import time
+from emane_xml_utils import *
 
-ipToNode = {}
+# <?xml version="1.0" encoding="UTF-8"?>
+# <!DOCTYPE transport SYSTEM "file:///usr/share/emane/dtd/transport.dtd">
+# <transport library="transvirtual"/>
 
-entry_filter = re.compile("^(\d+.\d+.\d+.[1-9]\d*)\s+(\d+.\d+.\d+.\d+).*")
-if len(sys.argv) > 1:
-  # 0	n0	172.16.1.1/24	10.0.0.1/24
-  f = open(sys.argv[1], 'r')
-  for line in f.readlines():
-    s = line.split()
-    nodeName = s[1]
-    for ip in s[2:]:
-      if ip != "0.0.0.0":
-        ipToNode[ip.split('/')[0]] = nodeName
 
-else:
-  filter = False
+class transvirtual_xml(emane_xml_generator):
 
-#route -n |grep ^1
-#10.0.3.0        0.0.0.0         255.255.255.0   U     0      0        0 lxcbr0
-#192.1.120.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
-#192.168.122.0   0.0.0.0         255.255.255.0   U     0      0        0 virbr0
+  def gen(self, params, args):
+    self.set_output("transport", "transvirtual.xml")
+    self.add_element("transport", library="transvirtual")
 
-nexthops = {}
-curtime = 0.0
 
-while True:
-  doflush = False
+def main():
+  transvirtual_xml()
 
-  for line in os.popen("route -n").readlines():
-    match = entry_filter.match(line)
-    if match:
-      dest = match.group(1)
-      nhop = match.group(2)
 
-      if ipToNode.has_key(dest):
-        dest = ipToNode[dest]
-
-      if nhop == "0.0.0.0" and not nexthops.has_key(dest):
-        print "%.2f add nexthop %s" % (curtime, dest)
-        doflush = True
-        nexthops[dest] = nhop
-      elif nhop != "0.0.0.0" and nexthops.has_key(dest):
-        print "%.2f remove nexthop %s" % (curtime, dest)
-        doflush = True
-        nexthops.pop(dest)
-
-  try:
-    if doflush:
-      sys.stdout.flush()
-    time.sleep(1)
-  except:
-    sys.exit(0)
-
-  curtime += 1.0
+if __name__ == "__main__":
+  main()
