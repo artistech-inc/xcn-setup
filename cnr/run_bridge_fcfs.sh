@@ -22,5 +22,8 @@ sleep 1
 
 BRIDGE_JAR=`pwd`/Vbs3EmanePlugin/target/cnr-bridge-1.0.jar
 
+IP=`hostname -I | awk '{print $1}'`
+echo $IP
+
 echo "java -cp $BRIDGE_JAR com.artistech.cnr.BridgeServer $CNR_ARGS -log FINER"
 java -cp $BRIDGE_JAR com.artistech.cnr.BridgeServer $CNR_ARGS -log FINER
